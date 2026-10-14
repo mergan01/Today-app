@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Today</title>
+  <style>
+    :root {
+      --bg: #f2f2f7;
+      --card: #ffffff;
+      --text: #000000;
+      --subtext: #8e8e93;
+      --border: #e5e5ea;
+      --accent: #007aff;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root[data-theme="system"] {
+        --bg: #000000;
+        --card: #1c1c1e;
+        --text: #ffffff;
+        --subtext: #8e8e93;
+        --border: #2c2c2e;
+      }
+    }
+
+    :root[data-theme="dark"] {
+      --bg: #000000;
+      --card: #1c1c1e;
+      --text: #ffffff;
+      --subtext: #8e8e93;
+      --border: #2c2c2e;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      padding-bottom: 90px;
+      padding-top: env(safe-area-inset-top, 20px);
+      transition: background 0.25s, color 0.25s;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+      z-index: 10;
+      border-bottom: 1px solid var(--border);
+    }
+
+    h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; }
+
+    .timer-badge {
+      background: var(--accent);
+      color: #fff;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .container { padding: 16px 20px; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 16px;
+      border: 1px solid var(--border);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .exercise-title { font-size: 18px; font-weight: 700; }
+
+    .set-row {
+      display: grid;
+      grid-template-columns: 35px 1fr 1fr 45px;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .set-num { font-weight: 700; color: var(--subtext); font-size: 14px; }
+
+    input {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 10px;
+      border-radius: 10px;
+      font-size: 15px;
+      text-align: center;
+      width: 100%;
+    }
+
+    .btn {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 15px;
+      width: 100%;
+      cursor: pointer;
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      margin-top: 8px;
+    }
+
+    .check-btn {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      height: 36px;
+      border-radius: 10px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .check-btn.done {
+      background: #34c759;
+      border-color: #34c759;
+      color: #fff;
+    }
+
+    /* KI Chat */
+    .chat-box {
+      height: 55vh;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding-bottom: 10px;
+    }
+
+    .msg {
+      max-width: 82%;
+      padding: 12px 15px;
+      border-radius: 18px;
+      font-size: 15px;
+      line-height: 1.4;
+    }
+
+    .msg.ai { background: var(--card); align-self: flex-start; border: 1px solid var(--border); }
+    .msg.user { background: var(--accent); color: #fff; align-self: flex-end; }
+
+    .chat-input {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    /* Bottom Navigation */
+    nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--card);
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-around;
+      padding: 10px 0 calc(10px + env(safe-area-inset-bottom, 10px));
+      z-index: 20;
+    }
+
+    .nav-btn {
+      background: none;
+      border: none;
+      color: var(--subtext);
+      font-size: 12px;
+      font-weight: 600;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+    }
+
+    .nav-btn.active { color: var(--accent); }
+    .nav-icon { font-size: 20px; }
+
+    .setting-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .setting-row:last-child { border-bottom: none; }
+    select {
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 8px;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1 id="page-title">Today</h1>
+    <div class="timer-badge" id="timer" onclick="startTimer(90)">⏱️ 00:00</div>
+  </header>
+
+  <div class="container">
+    <!-- TAB 1: WORKOUT -->
+    <div id="tab-workout" class="tab-content active">
+      <div id="exercises-list"></div>
+      <button class="btn" onclick="addExercise()">+ Übung hinzufügen</button>
+    </div>
+
+    <!-- TAB 2: KI COACH -->
+    <div id="tab-ai" class="tab-content">
+      <div class="chat-box" id="chat-box">
+        <div class="msg ai">Hey! Ich bin dein <b>Today KI-Coach</b>. Frag mich alles zu Trainingsplänen, Ausführung, Muskelaufbau oder Ernährung! 💪</div>
+      </div>
+      <div class="chat-input">
+        <input type="text" id="ai-input" placeholder="Frag den Coach..." style="text-align:left;">
+        <button class="btn" style="width:auto;" onclick="sendAiMessage()">Senden</button>
+      </div>
+    </div>
+
+    <!-- TAB 3: EINSTELLUNGEN -->
+    <div id="tab-settings" class="tab-content">
+      <div class="card">
+        <div class="setting-row">
+          <span>Erscheinungsbild</span>
+          <select id="theme-select" onchange="changeTheme(this.value)">
+            <option value="system">System (iPhone)</option>
+            <option value="dark">Dark Mode</option>
+            <option value="light">Light Mode</option>
+          </select>
+        </div>
+        <div class="setting-row">
+          <span>Akzentfarbe</span>
+          <select id="accent-select" onchange="changeAccent(this.value)">
+            <option value="#007aff">iOS Blau</option>
+            <option value="#ff3b30">Gym Rot</option>
+            <option value="#34c759">Neon Grün</option>
+            <option value="#af52de">Lila</option>
+            <option value="#ff9500">Orange</option>
+          </select>
+        </div>
+        <div class="setting-row" style="flex-direction:column; align-items:flex-start; gap:8px;">
+          <span>Gemini API-Key (für KI-Coach)</span>
+          <input type="password" id="api-key" placeholder="API Key hier einfügen..." onchange="saveApiKey(this.value)" style="text-align:left;">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <nav>
+    <button class="nav-btn active" onclick="switchTab('workout', 'Today', this)">
+      <span class="nav-icon">🏋️‍♂️</span>Workout
+    </button>
+    <button class="nav-btn" onclick="switchTab('ai', 'KI-Coach', this)">
+      <span class="nav-icon">⚡</span>KI-Coach
+    </button>
+    <button class="nav-btn" onclick="switchTab('settings', 'Settings', this)">
+      <span class="nav-icon">⚙️</span>Settings
+    </button>
+  </nav>
+
+  <script>
+    // State & Storage
+    let workouts = JSON.parse(localStorage.getItem('today_workouts')) || [
+      { name: "Bankdrücken", sets: [{ kg: 60, reps: 10, done: false }, { kg: 60, reps: 10, done: false }] },
+      { name: "Klimmzüge", sets: [{ kg: 0, reps: 8, done: false }, { kg: 0, reps: 8, done: false }] }
+    ];
+
+    function saveWorkouts() {
+      localStorage.setItem('today_workouts', JSON.stringify(workouts));
+      renderWorkouts();
+    }
+
+    function renderWorkouts() {
+      const container = document.getElementById('exercises-list');
+      container.innerHTML = '';
+      workouts.forEach((ex, exIndex) => {
+        let setsHtml = ex.sets.map((s, sIndex) => `
+          <div class="set-row">
+            <span class="set-num">${sIndex + 1}</span>
+            <input type="number" value="${s.kg}" onchange="updateSet(${exIndex}, ${sIndex}, 'kg', this.value)" placeholder="kg">
+            <input type="number" value="${s.reps}" onchange="updateSet(${exIndex}, ${sIndex}, 'reps', this.value)" placeholder="Reps">
+            <button class="check-btn ${s.done ? 'done' : ''}" onclick="toggleSet(${exIndex}, ${sIndex})">✓</button>
+          </div>
+        `).join('');
+
+        container.innerHTML += `
+          <div class="card">
+            <div class="card-header">
+              <span class="exercise-title">${ex.name}</span>
+              <span style="color:var(--subtext); cursor:pointer;" onclick="removeExercise(${exIndex})">✕</span>
+            </div>
+            <div class="set-row" style="margin-bottom:4px; font-size:12px; color:var(--subtext);">
+              <span>Satz</span><span style="text-align:center;">KG</span><span style="text-align:center;">Wdh.</span><span>✓</span>
+            </div>
+            ${setsHtml}
+            <button class="btn btn-outline" onclick="addSet(${exIndex})">+ Satz</button>
+          </div>
+        `;
+      });
+    }
+
+    function addExercise() {
+      const name = prompt("Name der Übung:");
+      if (name) {
+        workouts.push({ name, sets: [{ kg: 20, reps: 10, done: false }] });
+        saveWorkouts();
+      }
+    }
+
+    function removeExercise(i) {
+      workouts.splice(i, 1);
+      saveWorkouts();
+    }
+
+    function addSet(exIndex) {
+      const last = workouts[exIndex].sets.slice(-1)[0] || { kg: 20, reps: 10 };
+      workouts[exIndex].sets.push({ kg: last.kg, reps: last.reps, done: false });
+      saveWorkouts();
+    }
+
+    function updateSet(exIndex, sIndex, field, val) {
+      workouts[exIndex].sets[sIndex][field] = val;
+      saveWorkouts();
+    }
+
+    function toggleSet(exIndex, sIndex) {
+      const current = workouts[exIndex].sets[sIndex].done;
+      workouts[exIndex].sets[sIndex].done = !current;
+      if (!current) startTimer(90); // Startet automatisch 90s Pause
+      saveWorkouts();
+    }
+
+    // Timer
+    let timerInterval;
+    function startTimer(sec) {
+      clearInterval(timerInterval);
+      let left = sec;
+      const el = document.getElementById('timer');
+      timerInterval = setInterval(() => {
+        left--;
+        const m = String(Math.floor(left / 60)).padStart(2, '0');
+        const s = String(left % 60).padStart(2, '0');
+        el.innerText = `⏱️ ${m}:${s}`;
+        if (left <= 0) {
+          clearInterval(timerInterval);
+          el.innerText = "⏱️ Fertig!";
+        }
+      }, 1000);
+    }
+
+    // Tabs
+    function switchTab(tab, title, btn) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById('tab-' + tab).classList.add('active');
+      document.getElementById('page-title').innerText = title;
+      btn.classList.add('active');
+    }
+
+    // Theme & Accent
+    function changeTheme(val) {
+      document.documentElement.setAttribute('data-theme', val);
+      localStorage.setItem('today_theme', val);
+    }
+
+    function changeAccent(val) {
+      document.documentElement.style.setProperty('--accent', val);
+      localStorage.setItem('today_accent', val);
+    }
+
+    function saveApiKey(val) {
+      localStorage.setItem('today_api_key', val.trim());
+    }
+
+    // KI Coach (Gemini API)
+    async function sendAiMessage() {
+      const input = document.getElementById('ai-input');
+      const box = document.getElementById('chat-box');
+      const text = input.value.trim();
+      const key = localStorage.getItem('today_api_key');
+
+      if (!text) return;
+      box.innerHTML += `<div class="msg user">${text}</div>`;
+      input.value = '';
+      box.scrollTop = box.scrollHeight;
+
+      if (!key) {
+        box.innerHTML += `<div class="msg ai">Bitte füge zuerst in den <b>Settings ⚙️</b> deinen kostenlosen Gemini API-Key ein!</div>`;
+        return;
+      }
+
+      try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: "Du bist der KI-Fitness-Coach in der Gym-App 'Today'. Antworte kurz, direkt und motivierend auf Deutsch. Frage des Nutzers: " + text }] }]
+          })
+        });
+        const data = await res.json();
+        const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "Fehler bei der Antwort.";
+        box.innerHTML += `<div class="msg ai">${reply.replace(/\n/g, '<br>')}</div>`;
+        box.scrollTop = box.scrollHeight;
+      } catch (e) {
+        box.innerHTML += `<div class="msg ai">Verbindungsfehler. Prüfe deinen API-Key.</div>`;
+      }
+    }
+
+    // Init
+    const savedTheme = localStorage.getItem('today_theme') || 'system';
+    const savedAccent = localStorage.getItem('today_accent') || '#007aff';
+    document.getElementById('theme-select').value = savedTheme;
+    document.getElementById('accent-select').value = savedAccent;
+    document.getElementById('api-key').value = localStorage.getItem('today_api_key') || '';
+    changeTheme(savedTheme);
+    changeAccent(savedAccent);
+    renderWorkouts();
+  </script>
+</body>
+</html>
