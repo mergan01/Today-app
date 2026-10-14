@@ -1,0 +1,46 @@
+name: Build Today IPA
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Folder Structure
+        run: |
+          mkdir -p Payload/TodayApp.app
+          cp Info.plist Payload/TodayApp.app/Info.plist
+          
+          # Erstellt einen kleinen nativen Web-Wrapper (Swift Binary Stub)
+          cat << 'EOF' > main.swift
+          import Foundation
+          print("Today App Web Wrapper active")
+          EOF
+          swiftc main.swift -o Payload/TodayApp.app/TodayApp
+
+          # Verknüpft deine Live-Webseite als Start-URL in der App
+          cat << 'EOF' > Payload/TodayApp.app/config.plist
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>URL</key>
+              <string>https://mergan01.github.io/Today-app/</string>
+          </dict>
+          </plist>
+          EOF
+
+      - name: Compress to IPA
+        run: |
+          zip -r Today.ipa Payload
+
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Today.ipa
+          path: Today.ipa
