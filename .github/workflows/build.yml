@@ -13,26 +13,19 @@ jobs:
 
       - name: Setup Folder Structure
         run: |
-          mkdir -p Payload/TodayApp.app
-          cp Info.plist Payload/TodayApp.app/Info.plist
-          
-          # Erstellt einen kleinen nativen Web-Wrapper (Swift Binary Stub)
-          cat << 'EOF' > main.swift
-          import Foundation
-          print("Today App Web Wrapper active")
-          EOF
-          swiftc main.swift -o Payload/TodayApp.app/TodayApp
+          mkdir -p Payload/Today.app
+          cp Info.plist Payload/Today.app/Info.plist
 
-          # Verknüpft deine Live-Webseite als Start-URL in der App
-          cat << 'EOF' > Payload/TodayApp.app/config.plist
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>URL</key>
-              <string>https://mergan01.github.io/Today-app/</string>
-          </dict>
-          </plist>
+          cat << 'EOF' > Payload/Today.app/index.html
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <meta http-equiv="refresh" content="0; url='https://mergan01.github.io/Today-app/'">
+          </head>
+          <body>
+              <script>window.location.href = "https://mergan01.github.io/Today-app/";</script>
+          </body>
+          </html>
           EOF
 
       - name: Compress to IPA
