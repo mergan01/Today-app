@@ -16,6 +16,11 @@ jobs:
           mkdir -p Payload/Today.app
           cp Info.plist Payload/Today.app/Info.plist
 
+          # Bindet dein lila AppIcon direkt in die App ein
+          if [ -f "AppIcon.png" ]; then
+            cp AppIcon.png Payload/Today.app/AppIcon.png
+          fi
+
           cat << 'EOF' > Payload/Today.app/index.html
           <!DOCTYPE html>
           <html>
